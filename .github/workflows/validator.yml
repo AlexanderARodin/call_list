@@ -1,0 +1,36 @@
+name: validation
+on:
+  push:
+  
+  pull_request:
+    branches:
+      - main
+      - dev
+env:
+  CARGO_TERM_COLOR: always
+
+jobs:
+  build-N-test:
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: clone
+      uses: actions/checkout@v4
+
+    - uses: actions-rs/toolchain@v1
+      with:
+        profile: minimal
+        toolchain: stable
+          #target: wasm32-unknown-unknown
+        override: true
+          
+    - name: Rust Cache
+      uses: Swatinem/rust-cache@v2
+
+    - name: Build
+      run : cargo build
+
+    - name: Tests
+      run : cargo test
+
+# EOF
