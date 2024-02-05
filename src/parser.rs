@@ -34,8 +34,8 @@ use toml::Value;
 impl Parser<'_> {
 
     fn enter_script_by( &mut self, path: &str ) -> ResultOf< () > {
-        if self.nest_lvl >= 5 {
-            let msg = format!( "<enter_script_by>: nesting of subscripts muast be lower then <{}>", self.nest_lvl);
+        if self.nest_lvl > 5 {
+            let msg = format!( "<enter_script_by>: allowed max subscripts nesting is <{}>", self.nest_lvl-1 );
             return Err(Box::from( msg ));
         }else{
             self.nest_lvl += 1;
@@ -43,7 +43,7 @@ impl Parser<'_> {
         match get_value_by_path( self.tbl, path) {
             Some(toml::Value::Array(val_arr)) => {
                 for val in val_arr {
-                    self.push_script_value(val)?;
+                    self.process_one_script_item(val)?;
                 }
                 self.nest_lvl -= 1;
                 return Ok(());
@@ -59,13 +59,16 @@ impl Parser<'_> {
         }
     }
 
-    fn push_script_value( &mut self, value: &Value) -> ResultOf< () > {
+    fn process_one_script_item( &mut self, value: &Value) -> ResultOf< () > {
         match value {
             Value::String(s) => {
                 return self.push_simple_item( s );
             },
+            Value::Table(tbl) => {
+                return self.iterate_table( tbl );
+            },
             Value::Array(arr) => {
-                return self.push_subscripts( arr );
+                return self.iterate_array( arr );
             },
             _ => {
                 let msg = format!( "<push_script_value>: unsupported value <{value}>" );
@@ -74,14 +77,20 @@ impl Parser<'_> {
         }
     }
 
-    fn push_subscripts( &mut self, arr: &Vec<Value> ) -> ResultOf< () > {
+    fn iterate_array( &mut self, arr: &Vec<Value> ) -> ResultOf< () > {
         for val in arr {
-            self.push_subscript_link( val )?;
+            self.follow_subscript_link( val )?;
+        }
+        Ok(())
+    }
+    fn iterate_table( &mut self, tbl: &toml::Table ) -> ResultOf< () > {
+        for (key, value) in tbl {
+            self.process_one_pair( key, value )?;
         }
         Ok(())
     }
 
-    fn push_subscript_link( &mut self, link: &Value ) -> ResultOf< () > {
+    fn follow_subscript_link( &mut self, link: &Value ) -> ResultOf< () > {
         match link {
             Value::String(path) => {
                 return self.enter_script_by( path );
@@ -93,7 +102,26 @@ impl Parser<'_> {
         }
     }
 
+    fn process_one_pair( &mut self, key: &str, value: &Value ) -> ResultOf< () > {
+        match value {
+            Value::String(param) => {
+                return self.push_with_param( key, param );
+            },
+            _ => {
+                let msg = format!( "<process_one_pair>: unsupported pair <{}:{}>", key, value );
+                return Err(Box::from( msg ));
+            },
+        }
+    }
 
+
+    //  //  //  //  //  //  //
+    fn push_with_param( &mut self, key: &str, param: &str ) -> ResultOf< () > {
+        self.list.push(
+            CallItem::WithParam(key.to_string(), param.to_string())
+        );
+        Ok(())
+    }
     fn push_simple_item( &mut self, cmd: &str ) -> ResultOf< () > {
         self.list.push(
             CallItem::Simple(cmd.to_string())
