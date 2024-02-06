@@ -1,4 +1,3 @@
-//use crate::prelude::*;
 
 pub fn get_value_by_path<'a>( tbl: &'a toml::Table, path: &'a str ) -> Option< &'a toml::Value > {
     let elems = split_dot_path( path );
@@ -34,81 +33,76 @@ fn get_sub_value<'a>( tbl: &'a toml::Table, path_elems: &[&'a str] ) -> Option< 
 #[cfg(test)]
 mod utils_path {
     use super::*;
+    use crate::prelude::*;
+    use crate::from_toml_table;
 
     use toml::Table;
     use raalog::log;
 
     #[test]
-    fn check_path_spliter_77() {
+    fn check_path_spliter_77() -> ResultOf< () > {
         let tml = r#"
                     [workflows]
                     a.b = 3
                     x = 77
                     "#
-                    .parse::<Table>().unwrap();
-        let mist;
+                    .parse::<Table>()?;
         match get_value_by_path( &tml, "workflows.x" ) {
             Some(toml::Value::Integer(i)) => {
                 if *i == 77 {
-                    mist = "";
+                    return Ok(());
                 }else{
-                    mist = "invalid Integer value";
+                    return Err(Box::from( "invalid Integer value" ));
                 }
             },
             None => {
-                mist = "wrong Value type";
+                return Err(Box::from( "must not be a None" ));
             },
             _ => {
-                mist = "must not be a None";
+                return Err(Box::from( "wrong Value type" ));
             },
         }
-        assert!( mist == "", ">> {mist} <<");
     }
 
     #[test]
-    fn check_path_spliter_3() {
+    fn check_path_spliter_3() -> ResultOf< () > {
         let tml = r#"
                     [workflows]
                     a.b = 3
                     "#
-                    .parse::<Table>().unwrap();
-        let mist;
+                    .parse::<Table>()?;
         match get_value_by_path( &tml, "workflows.a.b" ) {
             Some(toml::Value::Integer(i)) => {
                 if *i == 3 {
-                    mist = "";
+                    return Ok(());
                 }else{
-                    mist = "invalid Integer value";
+                    return Err(Box::from( "invalid Integer value" ));
                 }
             },
             None => {
-                mist = "wrong Value type";
+                return Err(Box::from( "incorrect Value type" ));
             },
             _ => {
-                mist = "must not be a None";
+                return Err(Box::from( "must NOT be a None" ));
             },
         }
-        assert!( mist == "", ">> {mist} <<");
     }
 
     #[test]
-    fn error_invalid_wf() {
+    fn error_invalid_wf() -> ResultOf< () > {
         let tml = r#"
-                    #[workflows]
                     a.b = 3
                     "#
-                    .parse::<Table>().unwrap();
-        let mist;
-        match crate::from_toml_table( &tml, "a.b" ) {
+                    .parse::<Table>()?;
+        match from_toml_table( &tml, "a.b" ) {
             Err(e) => {
-                mist = "";
                 log::error(&e.to_string());
+                Ok(())
             },
             _ => {
-                mist = "has to be Error";
+                return Err(Box::from( "has to be Error" ));
             },
         }
-        assert!( mist == "", ">> {mist} <<");
     }
 }
 
@@ -126,7 +120,11 @@ mod utils_basic {
             "path", "to", "array",
         ];
         let val = split_dot_path(path);
-        assert_eq!( val, validator, "incorrect path spliting" );
+        assert_eq!( 
+            val, 
+            validator, 
+            "incorrect path spliting" 
+        );
     }
 }
 
