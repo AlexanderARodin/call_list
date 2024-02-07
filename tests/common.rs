@@ -19,10 +19,10 @@ fn simple_table() {
                 "#
                 .parse::<Table>().unwrap();
     let validator = vec![
-            CallItem::WithParam("a".to_string(), "A".to_string()),
-            CallItem::WithParam("b".to_string(), "B".to_string()),
-            CallItem::Simple("branch".to_string()),
-            CallItem::WithParam("some-thing".to_string(), "some-think".to_string()),
+            CallItem::new("a").append("A"),
+            CallItem::new("b").append("B"),
+            CallItem::new("branch"),
+            CallItem::new("some-thing").append("some-think"),
     ];
     let mist;
     match from_toml_table( &tml, "sc2" ) {
@@ -51,13 +51,13 @@ fn subscripts_array() {
                 "#
                 .parse::<Table>().unwrap();
     let validator = vec![
-            CallItem::Simple("the0".to_string()),
-            CallItem::Simple("the2".to_string()),
-            CallItem::Simple("branch".to_string()),
-            CallItem::Simple("the3".to_string()),
-            CallItem::Simple("the4".to_string()),
-            CallItem::Simple("the5".to_string()),
-            CallItem::Simple("fin".to_string()),
+            CallItem::new("the0"),
+            CallItem::new("the2"),
+            CallItem::new("branch"),
+            CallItem::new("the3"),
+            CallItem::new("the4"),
+            CallItem::new("the5"),
+            CallItem::new("fin"),
     ];
     let mist;
     match from_toml_table( &tml, "workflows.run0" ) {
@@ -91,14 +91,14 @@ fn ok_with_nesting_lvl5() {
                 "#
                 .parse::<Table>().unwrap();
     let validator = vec![
-            CallItem::Simple("the0".to_string()),
-            CallItem::Simple("the1".to_string()),
-            CallItem::Simple("the2".to_string()),
-            CallItem::Simple("the3".to_string()),
-            CallItem::Simple("the4".to_string()),
-            CallItem::Simple("the5".to_string()),
-            CallItem::Simple("fin".to_string()),
-            CallItem::Simple("branch".to_string()),
+            CallItem::new("the0"),
+            CallItem::new("the1"),
+            CallItem::new("the2"),
+            CallItem::new("the3"),
+            CallItem::new("the4"),
+            CallItem::new("the5"),
+            CallItem::new("fin"),
+            CallItem::new("branch"),
     ];
     let mist;
     match from_toml_table( &tml, "workflows.run0" ) {
@@ -149,8 +149,8 @@ fn check_simple() {
                 "#
                 .parse::<Table>().unwrap();
     let validator = vec![
-            CallItem::Simple("the".to_string()),
-            CallItem::Simple("script".to_string()),
+            CallItem::new("the"),
+            CallItem::new("script"),
     ];
     let mist;
     match from_toml_table( &tml, "workflows.script" ) {

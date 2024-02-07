@@ -7,6 +7,52 @@
 #[allow(dead_code)]
 #[derive(Debug)]
 pub enum CallItem {
+    Item( Box<str>, Option< Box<CallItem> > ),
+}
+impl CallItem {
+    pub fn new( s: &str ) -> Self {
+        Self::Item( s.into(), None )
+    }
+    pub fn append(&self, s2: &str) -> Self {
+        match &self {
+            Self::Item( a, None ) => {
+                Self::Item(
+                    a.clone(),
+                    Some( Self::new( &s2 ).into() )
+                )
+            },
+            Self::Item( a, Some(b) ) => {
+                let new_b = b.append(s2);
+                Self::Item(
+                    a.clone(),
+                    Some( new_b.into() )
+                )
+            },
+        }
+    }
+}
+
+impl PartialEq for CallItem {
+    fn eq( &self, rh: &Self ) -> bool {
+        match (self, rh) {
+            (CallItem::Item( lh_a, None), CallItem::Item( rh_a, None )) => {
+                lh_a == rh_a
+            },
+            (CallItem::Item( lh_a, Some(lh_b) ), CallItem::Item( rh_a, Some( rh_b) )) => {
+                if lh_a != rh_a {
+                    return false;
+                }
+                return lh_b == rh_b;
+            },
+            _ => false,
+        }
+    }
+}
+
+/*
+#[allow(dead_code)]
+#[derive(Debug)]
+pub enum CallItem {
     Simple(String),
     WithParam(String, String),
 }
@@ -24,6 +70,7 @@ impl PartialEq for CallItem {
         }
     }
 }
+*/
 
 //  //  //  //  //  //  //  //
 //      TESTs

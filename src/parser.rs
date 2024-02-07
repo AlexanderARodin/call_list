@@ -118,13 +118,14 @@ impl Parser<'_> {
     //  //  //  //  //  //  //
     fn push_with_param( &mut self, key: &str, param: &str ) -> ResultOf< () > {
         self.list.push(
-            CallItem::WithParam(key.to_string(), param.to_string())
+            CallItem::new( key )
+                        .append(param)
         );
         Ok(())
     }
     fn push_simple_item( &mut self, cmd: &str ) -> ResultOf< () > {
         self.list.push(
-            CallItem::Simple(cmd.to_string())
+            CallItem::new(cmd)
         );
         Ok(())
     }
