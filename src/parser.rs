@@ -99,20 +99,8 @@ impl Parser<'_> {
     fn iterate_table( &mut self, tbl: &toml::Table ) -> ResultOf< () > {
         for (key, value) in tbl {
             self.push_table_item( key, value )?;
-            //self.process_one_pair( key, value )?;
         }
         Ok(())
-    }
-    fn process_one_pair( &mut self, key: &str, value: &Value ) -> ResultOf< () > {
-        match value {
-            Value::String(param) => {
-                return self.push_with_param( key, param );
-            },
-            _ => {
-                let msg = format!( "<process_one_pair>: unsupported pair <{}:{}>", key, value );
-                return Err(Box::from( msg ));
-            },
-        }
     }
 
     //  //  //  //  //  //  //
@@ -120,13 +108,6 @@ impl Parser<'_> {
         let item: CallItem = construct_table_callitem( key, value )?;
         self.list.push(
             item
-        );
-        Ok(())
-    }
-    fn push_with_param( &mut self, key: &str, param: &str ) -> ResultOf< () > {
-        self.list.push(
-            CallItem::new( key )
-                        .append(param)
         );
         Ok(())
     }

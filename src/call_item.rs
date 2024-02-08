@@ -4,31 +4,35 @@
 //      CORE
 //  //  //  //  //  //  //  //
 
-#[allow(dead_code)]
 #[derive(Debug)]
 pub enum CallItem {
-    Item( Box<str>, Option< Box<CallItem> > ),
+    Simple( Box<str> ),
+    WithNested( Box<str>, Box<CallItem> ),
 }
 impl CallItem {
+
     pub fn new( s: &str ) -> Self {
-        Self::Item( s.into(), None )
+        Self::Simple( s.into() )
     }
+
     pub fn new_pair( s: &str, nested: CallItem ) -> Self {
-        Self::Item( s.into(), Some(Box::new(nested)) )
+        Self::WithNested( s.into(), Box::new(nested) )
     }
+
     pub fn append(&self, s2: &str) -> Self {
         match &self {
-            Self::Item( a, None ) => {
-                Self::Item(
+            Self::Simple( a ) => {
+                let nested = Self::new( &s2 );
+                Self::WithNested(
                     a.clone(),
-                    Some( Self::new( &s2 ).into() )
+                    nested.into()
                 )
             },
-            Self::Item( a, Some(b) ) => {
+            Self::WithNested( a, b ) => {
                 let new_b = b.append(s2);
-                Self::Item(
+                Self::WithNested(
                     a.clone(),
-                    Some( new_b.into() )
+                    new_b.into()
                 )
             },
         }
@@ -38,10 +42,10 @@ impl CallItem {
 impl PartialEq for CallItem {
     fn eq( &self, rh: &Self ) -> bool {
         match (self, rh) {
-            (CallItem::Item( lh_a, None), CallItem::Item( rh_a, None )) => {
+            (CallItem::Simple( lh_a ), CallItem::Simple( rh_a )) => {
                 lh_a == rh_a
             },
-            (CallItem::Item( lh_a, Some(lh_b) ), CallItem::Item( rh_a, Some( rh_b) )) => {
+            (CallItem::WithNested( lh_a, lh_b ), CallItem::WithNested( rh_a, rh_b )) => {
                 if lh_a != rh_a {
                     return false;
                 }
@@ -52,28 +56,6 @@ impl PartialEq for CallItem {
     }
 }
 
-/*
-#[allow(dead_code)]
-#[derive(Debug)]
-pub enum CallItem {
-    Simple(String),
-    WithParam(String, String),
-}
-
-impl PartialEq for CallItem {
-    fn eq( &self, rh: &Self ) -> bool {
-        match (self, rh) {
-            (CallItem::Simple(lh_s), CallItem::Simple(rh_s)) => {
-                lh_s == rh_s
-            },
-            (CallItem::WithParam(lh_a, lh_b), CallItem::WithParam(rh_a,rh_b)) => {
-                (lh_a == rh_a) && (lh_b == rh_b)
-            },
-            _ => false,
-        }
-    }
-}
-*/
 
 //  //  //  //  //  //  //  //
 //      TESTs
@@ -84,53 +66,53 @@ mod call_item_basic {
 
     #[test]
     fn check_withparam_simple_not_2() {
-        let a = CallItem::WithParam( "111".to_string(), "222".to_string() );
-        let b = CallItem::Simple( "111".to_string() );
+        let a = CallItem::new( "111" ).append( "222" );
+        let b = CallItem::new( "111" );
         assert_ne!(b,a);
     }
     #[test]
     fn check_withparam_simple_not_1() {
-        let a = CallItem::WithParam( "111".to_string(), "222".to_string() );
-        let b = CallItem::Simple( "111".to_string() );
+        let a = CallItem::new( "111" ).append( "222" );
+        let b = CallItem::new( "111" );
         assert_ne!(a,b);
     }
 
     #[test]
     fn check_withparam_not_3() {
-        let a = CallItem::WithParam( "1_1".to_string(), "222".to_string() );
-        let b = CallItem::WithParam( "111".to_string(), "2_2".to_string() );
+        let a = CallItem::new( "1_1" ).append( "222" );
+        let b = CallItem::new( "111" ).append( "2_2" );
         assert_ne!(a,b);
     }
     #[test]
     fn check_withparam_not_2() {
-        let a = CallItem::WithParam( "111".to_string(), "222".to_string() );
-        let b = CallItem::WithParam( "111".to_string(), "2_2".to_string() );
+        let a = CallItem::new( "111" ).append( "222" );
+        let b = CallItem::new( "111" ).append( "2_2" );
         assert_ne!(a,b);
     }
     #[test]
     fn check_withparam_not_1() {
-        let a = CallItem::WithParam( "1_1".to_string(), "222".to_string() );
-        let b = CallItem::WithParam( "111".to_string(), "222".to_string() );
+        let a = CallItem::new( "1_1" ).append( "222" );
+        let b = CallItem::new( "111" ).append( "222" );
         assert_ne!(a,b);
     }
 
     #[test]
     fn check_withparam_ok() {
-        let a = CallItem::WithParam( "111".to_string(), "222".to_string() );
-        let b = CallItem::WithParam( "111".to_string(), "222".to_string() );
+        let a = CallItem::new( "111" ).append( "222" );
+        let b = CallItem::new( "111" ).append( "222" );
         assert_eq!(a,b);
     }
 
     #[test]
     fn check_simple_not() {
-        let a = CallItem::Simple( "111".to_string() );
-        let b = CallItem::Simple( "1_1".to_string() );
+        let a = CallItem::new( "111" );
+        let b = CallItem::new( "1_1" );
         assert_ne!(a,b);
     }
     #[test]
     fn check_simple_ok() {
-        let a = CallItem::Simple( "111".to_string() );
-        let b = CallItem::Simple( "111".to_string() );
+        let a = CallItem::new( "111" );
+        let b = CallItem::new( "111" );
         assert_eq!(a,b);
     }
 }
