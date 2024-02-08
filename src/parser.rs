@@ -83,12 +83,6 @@ impl Parser<'_> {
         }
         Ok(())
     }
-    fn iterate_table( &mut self, tbl: &toml::Table ) -> ResultOf< () > {
-        for (key, value) in tbl {
-            self.process_one_pair( key, value )?;
-        }
-        Ok(())
-    }
 
     fn follow_subscript_link( &mut self, link: &Value ) -> ResultOf< () > {
         match link {
@@ -102,6 +96,13 @@ impl Parser<'_> {
         }
     }
 
+    fn iterate_table( &mut self, tbl: &toml::Table ) -> ResultOf< () > {
+        for (key, value) in tbl {
+            self.push_table_item( key, value )?;
+            //self.process_one_pair( key, value )?;
+        }
+        Ok(())
+    }
     fn process_one_pair( &mut self, key: &str, value: &Value ) -> ResultOf< () > {
         match value {
             Value::String(param) => {
@@ -114,8 +115,14 @@ impl Parser<'_> {
         }
     }
 
-
     //  //  //  //  //  //  //
+    fn push_table_item( &mut self, key: &str, value: &Value ) -> ResultOf< () > {
+        let item: CallItem = construct_table_callitem( key, value )?;
+        self.list.push(
+            item
+        );
+        Ok(())
+    }
     fn push_with_param( &mut self, key: &str, param: &str ) -> ResultOf< () > {
         self.list.push(
             CallItem::new( key )
@@ -130,5 +137,29 @@ impl Parser<'_> {
         Ok(())
     }
 }
-
+    //  //  //  //  //  //  //
+fn construct_table_callitem( key: &str, value: &Value ) -> ResultOf< CallItem > {
+    match value {
+        Value::String( s ) => {
+            return Ok( CallItem::new( key ).append( s ) );
+        },
+        Value::Table( sub_tbl ) => {
+            if sub_tbl.len() > 1 {
+                let msg = format!( "<construct_table_callitem>: subtable must have single item" );
+                return Err(Box::from( msg ));
+            }
+            for (sub_key,sub_value) in sub_tbl.iter() {
+                return Ok( CallItem::new_pair( key,
+                                           construct_table_callitem(sub_key, sub_value)?
+                                           ) );
+            }
+            let msg = format!( "<construct_table_callitem>: block must be unreachable" );
+            return Err(Box::from( msg ));
+        },
+        _ => {
+            let msg = format!( "<construct_table_callitem>: unsupported table item <{}>", value );
+            return Err(Box::from( msg ));
+        },
+    }
+}
 

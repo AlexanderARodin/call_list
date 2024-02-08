@@ -1,56 +1,48 @@
 
 
-#[allow(dead_code)]
-#[derive(Debug)]
-pub enum CallItem {
-    Item( Box<str>, Option< Box<CallItem> > ),
-}
-impl CallItem {
-    pub fn new( s: &str ) -> Self {
-        Self::Item( s.into(), None )
-    }
-    pub fn append(&self, s2: &str) -> Self {
-        match &self {
-            Self::Item( a, None ) => {
-                Self::Item(
-                    a.clone(),
-                    Some( Self::new( &s2 ).into() )
-                )
-            },
-            Self::Item( a, Some(b) ) => {
-                let new_b = b.append(s2);
-                Self::Item(
-                    a.clone(),
-                    Some( new_b.into() )
-                )
-            },
-        }
-    }
-}
+use toml::Table;
+use raalog::log;
+
 
 //  //  //  //  //  //  //  //
 //      TESTs
 //  //  //  //  //  //  //  //
+use call_list::{ from_toml_table, CallItem };
 
 #[test]
-fn NestedItems() {
-    let t = CallItem
-                ::new( "a" )
-                .append( "b" )
-                .append( "c" )
-                .append( "d" );
-    pr( 0, &t );
-}
-
-fn pr( n: i32, item: &CallItem ) {
-    match item {
-        CallItem::Item( a, None ) => {
-            println!( "{} --> ({}, None)", n, a );
-        }
-        CallItem::Item( a, Some(b) ) => {
-            println!( "{} --> ({}, -- )", n, a );
-            pr( n+1, &b );
-        }
+fn nested_tables() {
+    let tml = r#"
+                [workflows]
+                sc2 = [ 
+                    { a = 'A', b = 'B' },
+                    'branch',
+                    { some-thing = 'some-think' },
+                    'beforing',
+                    { root = { lvl2 = 'lvl3' } },
+                    { root = { lvl2 = { lvl3 = 'lvl4' } } },
+                ]
+                "#
+                .parse::<Table>().unwrap();
+    let validator = vec![
+            CallItem::new("a").append("A"),
+            CallItem::new("b").append("B"),
+            CallItem::new("branch"),
+            CallItem::new("some-thing").append("some-think"),
+            CallItem::new("beforing"),
+            CallItem::new("root").append("lvl2").append("lvl3"),
+            CallItem::new("root").append("lvl2").append("lvl3").append("lvl4"),
+    ];
+    let mist;
+    match from_toml_table( &tml, "workflows.sc2" ) {
+        Err(e) => {
+            mist = "must NOT be Errors";
+            log::error(&e.to_string());
+        },
+        Ok(list) => {
+            mist = "";
+            assert_eq!( list, validator, "list are NOT identical {:?} - {:?}", list, validator );
+        },
     }
+    assert!( mist == "", ">> {mist} <<");
 }
 

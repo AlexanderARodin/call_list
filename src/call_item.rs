@@ -13,6 +13,9 @@ impl CallItem {
     pub fn new( s: &str ) -> Self {
         Self::Item( s.into(), None )
     }
+    pub fn new_pair( s: &str, nested: CallItem ) -> Self {
+        Self::Item( s.into(), Some(Box::new(nested)) )
+    }
     pub fn append(&self, s2: &str) -> Self {
         match &self {
             Self::Item( a, None ) => {
