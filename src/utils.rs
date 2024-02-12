@@ -4,7 +4,6 @@ pub fn get_value_by_path<'a>( tbl: &'a toml::Table, path: &'a str ) -> Option< &
     return get_sub_value(tbl, &elems);
  }
 
-
 pub(super) fn split_dot_path( path: &str ) -> Vec<&str> {
     let s = path.split(".");
     return s.collect();

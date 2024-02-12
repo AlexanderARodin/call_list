@@ -2,8 +2,11 @@ mod prelude;
 use prelude::*;
 
 mod utils;
+pub use utils::get_value_by_path as get_value_by_path;
+
 mod call_item;
 pub use call_item::CallItem as CallItem;
+
 
 mod parser;
 
